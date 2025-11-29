@@ -1,0 +1,90 @@
+import telebot as tb
+
+
+#Data needed to access the Telegram bot
+TELEGRAM_TOKEN = '8334052105:AAH0y3V_2HW-MtOtlG48kZBgaAiHwX8lBt4'
+bot = tb.TeleBot(TELEGRAM_TOKEN)
+
+
+
+#Start command - introduction to the bot and it's commands.
+@bot.message_handler(commands=['start'])
+def start_message(message):
+    bot.send_message(message.chat.id, 'Hello, I`m your expense tracker bot, I will help you manage your daily spending habits.')
+    bot.send_message(message.chat.id, '''Here are the main commands:
+                                      /restart_tracker - start your daily expense tracker
+                                      
+                                      /purchase - add new purchase to your tracker, write what did you buy and how much did it cost
+                                      
+                                      /stop_tracker - finish your tracker and get a summary of your purchases
+                                      ''')
+
+spending_list = {}
+
+
+
+#Restart_tracker - command that resets the tracker.
+@bot.message_handler(commands=['restart_tracker'])
+def start_tracker(message):
+    spending_list = {}
+    spending_list.clear()
+    bot.send_message(message.chat.id, 'The tracker has been restarted.')
+
+
+
+
+
+
+
+#Purchase command - adds the name and the price of a purchase to the list.
+@bot.message_handler(commands=['purchase'])
+def ask_price(message):
+    msg = bot.reply_to(message, "Enter the price of your purchase (USD):")
+    bot.register_next_step_handler(msg, get_number)
+
+def get_number(message):
+    try:
+        number = float(message.text)
+        msg = bot.reply_to(message, "Enter the name of your purchase:")
+        bot.register_next_step_handler(msg, get_text, number)
+    except ValueError:
+        msg = bot.reply_to(message, "That's not a number. Try again:")
+        bot.register_next_step_handler(msg, get_number)
+
+def get_text(message, number):
+    text = message.text
+    user_id = message.from_user.id
+
+    if user_id not in spending_list:
+        spending_list[user_id] = []
+
+    spending_list[user_id].append((number, text))
+    bot.reply_to(message, f"Added ({number}, '{text}') to your list!")
+
+
+
+
+#Stop_tracker - command that stops the shows all the purchased items, shows hom much money the user spent, resets the tracker.
+@bot.message_handler(commands=['stop_tracker'])
+def show_list(message):
+    user_id = message.from_user.id
+    if user_id in spending_list and spending_list[user_id]:
+        items = "\n".join([f"{num}USD - {txt}" for num, txt in spending_list[user_id]])
+        bot.reply_to(message, f"Your list:\n{items}")
+        total = sum([num for num, txt in spending_list[user_id]])
+        bot.reply_to(
+            message,f"Your list:\n{items}\n\nTotal: {total} USD")
+    else:
+        bot.reply_to(message, "You haven't purchased anything!")
+    spending_list.clear()
+
+
+
+
+
+
+#Debug command made for quick testing of the bot.
+@bot.message_handler(commands=['test'])
+def test(message):
+    bot.send_message(message.chat.id, 'Bot isn`t broken yet')
+bot.infinity_polling(none_stop=True)
