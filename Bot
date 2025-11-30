@@ -12,7 +12,7 @@ bot = tb.TeleBot(TELEGRAM_TOKEN)
 def start_message(message):
     bot.send_message(message.chat.id, 'Hello, I`m your expense tracker bot, I will help you manage your daily spending habits.')
     bot.send_message(message.chat.id, '''Here are the main commands:
-                                      /restart_tracker - start your daily expense tracker
+                                      /restart_tracker - restart your daily expense tracker
                                       
                                       /purchase - add new purchase to your tracker, write what did you buy and how much did it cost
                                       
@@ -73,7 +73,7 @@ def show_list(message):
         bot.reply_to(message, f"Your list:\n{items}")
         total = sum([num for num, txt in spending_list[user_id]])
         bot.reply_to(
-            message,f"Your list:\n{items}\n\nTotal: {total} USD")
+            message,f"Total: {total} USD")
     else:
         bot.reply_to(message, "You haven't purchased anything!")
     spending_list.clear()
